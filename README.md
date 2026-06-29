@@ -1,6 +1,6 @@
 # NHL Daily Bot
 
-Sends a daily NHL morning digest to a Telegram chat using Claude AI with live web search.
+Sends a daily NHL morning digest to a Telegram chat using Claude AI with live web search. Focused on the Red Wings, Wild, and Stars.
 
 ## Setup
 
@@ -20,14 +20,15 @@ Sends a daily NHL morning digest to a Telegram chat using Claude AI with live we
 ## Usage
 
 ```bash
-uv run main.py
+make run
 ```
 
-The bot searches for current NHL news, generates a structured digest focused on the Red Wings, Wild, and Stars, posts it to Telegram, and prints a cost breakdown to stdout.
+Each run costs roughly $0.06 and prints a token/cost breakdown to stdout. The digest is sent to Telegram with a date header.
 
 ## Digest format
 
-- Top story
-- Team updates (Red Wings, Wild, Stars)
+- Date header
+- Top story (linked to source)
+- Team updates: Red Wings, Wild, Stars (player names linked to NHL.com profiles)
 - Player to know
-- Condensed game link from NHL.com
+- Condensed game link (skipped during offseason)
