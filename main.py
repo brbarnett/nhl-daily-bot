@@ -1,7 +1,8 @@
 import re
 import anthropic
 import requests
-from datetime import date
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -51,9 +52,14 @@ The output is rendered in Telegram with HTML parse mode. Use only HTML tags for 
 - Links: <a href="URL">Player Name</a> or <a href="URL">Headline</a>
 Never link an entire sentence. Only link to specific URLs you found during your search — never link to a team homepage or generic page. If you don't have a real player profile URL, just write the name as plain text. Keep the entire digest under 300 words. Be direct, no fluff."""
 
-USER_PROMPT = """Search for today's NHL news and produce my morning digest.
+
+def build_user_prompt() -> str:
+    now = datetime.now(ZoneInfo("America/Detroit"))
+    timestamp = now.strftime("%B %d, %Y at %I:%M %p %Z")
+    return f"""It is currently {timestamp}. Search for NHL news from the past 24 hours only and produce my morning digest.
 Focus on the Red Wings, Wild, and Stars. Check for any overnight transactions,
-trade rumors, injury updates, or game results."""
+trade rumors, injury updates, or game results. Only include stories that broke
+or were updated in the past 24 hours — skip anything older than that."""
 
 
 MAX_SEARCHES = 3
@@ -74,11 +80,13 @@ def get_digest() -> tuple[str, anthropic.types.Usage]:
                 "allowed_callers": ["direct"],
             }
         ],
-        messages=[{"role": "user", "content": USER_PROMPT}],
+        messages=[{"role": "user", "content": build_user_prompt()}],
     )
 
     text = " ".join(block.text for block in response.content if block.type == "text")
-    text = re.sub(r"\s*\n\s*([,\.!?])", r"\1", text)  # pull punctuation up to previous line
+    text = re.sub(
+        r"\s*\n\s*([,\.!?])", r"\1", text
+    )  # pull punctuation up to previous line
     text = re.sub(r" +([,\.!?])", r"\1", text)  # remove space before punctuation
     text = re.sub(r"\n{3,}", "\n\n", text)  # collapse excessive blank lines
     text = text.strip()
